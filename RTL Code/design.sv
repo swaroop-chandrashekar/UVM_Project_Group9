@@ -1,31 +1,3 @@
-/********************************************************************************************
-
-Copyright 2011-2012 - Aceic design Technologies Pvt Ltd. All Rights Reserved.
-
-This source code is an unpublished work belongs to Aceic Design Technologies Pvt Ltd.
-It is considered a trade secret and is not to be divulged or used by parties who 
-have not received written authorization from Aceic Design Technologies Pvt Ltd.
-
-Aceic Design Technologies 
-Bangalore - 560076
-
-Webpage: www.aceic.com
-
-Filename:	fifo.sv   
-
-Description:	FIFO RTL
-
-Date:		24/02/2012
-
-Author:		Siva Kumar P R
-
-Email:		siva@maven-silicon.com
-		siva@aceic.com
-
-Version:	1.0
-
-*********************************************************************************************/
-
 `define FIFO_DEPTH 16	// FIFO depth
 `define DATA_WIDTH 8    // Data bus width
 `define PTR_SIZE 4 	// Read and Write pointers size 
