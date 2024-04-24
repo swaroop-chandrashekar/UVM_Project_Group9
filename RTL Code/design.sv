@@ -97,12 +97,12 @@ module rptr_handler #(parameter ADDR_SIZE = 12)( rinc, rclk, rrst, wptr_s, rEmpt
 input  logic rinc, rclk , rrst;
 input  logic [ADDR_SIZE :0] wptr_s;
 output logic rEmpty;
+output logic rHalf_empty;
 output logic [ADDR_SIZE-1:0] raddr;
 output logic [ADDR_SIZE :0] rptr;
 
 logic [ADDR_SIZE:0] rbin;                                                 //register for read pointer in binary
-logic rEmpty_reg;                                                         //register whether fifo empty or not
-logic rHalf_empty;														  //register to check the half empty conditions
+logic rEmpty_reg;                                                         //register whether fifo empty or not														
 logic [ADDR_SIZE:0] rgraynext;                                            //next read pointer in gray code
 logic [ADDR_SIZE:0] rbinnext;                                             //next read pointer in binary form
 
@@ -147,11 +147,11 @@ module wptr_handler #(parameter ADDR_SIZE = 12)(winc, wclk, wrst, rptr_s, wFull,
 input logic winc, wclk, wrst;
 input logic [ADDR_SIZE :0] rptr_s;
 output logic wFull;
+output logic wHalf_full;
 output logic [ADDR_SIZE-1:0] waddr;
 output logic [ADDR_SIZE :0] wptr;
 
-logic wFull_reg;                                                                    		     //register whether fifo full or not
-logic wHalf_full;																				 //checking half full condition 
+logic wFull_reg;                                                                    		     //register whether fifo full or not																				 
 logic [ADDR_SIZE:0] wbin;                                                           		     //register for write pointer in binary
 logic [ADDR_SIZE:0] wgraynext;                                                      		     //next write pointer in gray code
 logic [ADDR_SIZE:0] wbinnext;                                                       		     //next write pointer in binary
