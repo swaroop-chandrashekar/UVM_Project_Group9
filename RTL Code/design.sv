@@ -23,6 +23,34 @@ wptr_handler #(ADDR_SIZE)       	    wptr_handler_inst     (.*);
 
 endmodule
 
+
+//////////********* Synchronizer write to read module*********////////////
+
+
+module synchronizer_w2r #(parameter ADDR_SIZE = 12)
+  (
+   output logic [ADDR_SIZE:0] wptr_s,
+   input [ADDR_SIZE:0] wptr,
+   input rclk, rrst
+  );
+  
+  logic [ADDR_SIZE:0] r1_wptr;
+
+  always_ff @(posedge rclk or negedge rrst) begin
+    if (!rrst) begin
+      {wptr_s, r1_wptr} <= 0;
+    end
+    else begin
+      {wptr_s, r1_wptr} <= {r1_wptr, wptr};
+    end
+  end
+
+endmodule
+
+
+
+
+
 //////////*********rptr handler module**********///////////
 module rptr_handler #(parameter ADDR_SIZE = 12)
     (rEmpty,
