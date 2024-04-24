@@ -23,6 +23,30 @@ wptr_handler #(ADDR_SIZE)       	wptr_handler_inst     (.*);
 
 endmodule
 
+//////////********* FIFO Memory Buffer module*********////////////
+
+module fifomem #(parameter DATASIZE = 12, parameter ADDRSIZE = 12) // Number of data word width and mem address bits
+ (output logic [DATASIZE-1:0] rdata,
+ input logic [DATASIZE-1:0] wdata,
+ input logic [ADDRSIZE-1:0] waddr, raddr,
+ input logic rinc, winc, wclk, wrst, wFull, rEmpty, rclk);
+
+ // memory model
+ localparam DEPTH = 1<<ADDRSIZE;
+ logic [DATASIZE-1:0] mem [0:DEPTH-1];
+
+	always@(posedge rclk or negedge wrst)
+	 begin
+	      if(rinc && !rEmpty) 
+		 rdata = mem[raddr];
+         end
+
+	always @(posedge wclk or negedge wrst)
+	begin
+ 	     if (winc && !wFull) 
+	        mem[waddr] <= wdata;
+	end
+endmodule
 //////////********* Synchronizer write to read module*********////////////
 
 
