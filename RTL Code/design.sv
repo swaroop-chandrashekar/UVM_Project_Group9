@@ -26,25 +26,25 @@ endmodule
 //////////********* FIFO Memory Buffer module*********////////////
 
 module fifomem #(parameter DATASIZE = 12, parameter ADDRSIZE = 12) // Number of data word width and mem address bits
- (output logic [DATASIZE-1:0] rdata,
- input logic [DATASIZE-1:0] wdata,
+	(output logic [DATASIZE-1:0] rData,
+	 input logic [DATASIZE-1:0] wData,
  input logic [ADDRSIZE-1:0] waddr, raddr,
  input logic rinc, winc, wclk, wrst, wFull, rEmpty, rclk);
 
  // memory model
- localparam DEPTH = 1<<ADDRSIZE;
+ localparam DEPTH = 1<<ADDRSIZE-1;
  logic [DATASIZE-1:0] mem [0:DEPTH-1];
 
 	always@(posedge rclk or negedge wrst)
 	 begin
 	      if(rinc && !rEmpty) 
-		 rdata = mem[raddr];
+		 rData = mem[raddr];
          end
 
 	always @(posedge wclk or negedge wrst)
 	begin
  	     if (winc && !wFull) 
-	        mem[waddr] <= wdata;
+		 mem[waddr] <= wData;
 	end
 endmodule
 //////////********* Synchronizer read to write module*********////////////
