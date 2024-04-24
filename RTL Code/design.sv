@@ -64,6 +64,7 @@ input logic wclk, wrst
 		    {rptr_s, wq1_rptr} <= 0;
     		else 
 	    	    {rptr_s, wq1_rptr} <= {wq1_rptr, rptr};
+	end
 endmodule
 
 //////////********* Synchronizer write to read module*********////////////
