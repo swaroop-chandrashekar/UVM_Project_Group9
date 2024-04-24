@@ -34,8 +34,8 @@ always_ff @(posedge rclk or negedge rrst)
 assign raddr = rbin[ADDR_SIZE-1:0];                            //read address of the fifo
 
 always_comb begin                                              //read pointer logic
-    rbinnext = rbin + (rinc & ~rEmpty);                 //updated when rinc is high and fifo is not empty
-    rgraynext = (rbinnext>>1) ^ rbinnext;               //binary to gray code conversion 
+    rbinnext = rbin + (rinc & ~rEmpty);                        //updated when rinc is high and fifo is not empty
+    rgraynext = (rbinnext>>1) ^ rbinnext;                      //binary to gray code conversion 
 end
 
 assign rEmpty_reg = (rgraynext == wptr_s);                     //empty generation logic
