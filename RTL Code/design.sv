@@ -50,7 +50,7 @@ endmodule
 //////////********* Synchronizer read to write module*********////////////
 
 
-module synchronizer_r2w #(parameter ADDR_SIZE = 12)(wclk, rrst, rptr, rptr_s);
+module synchronizer_r2w #(parameter ADDR_SIZE = 12)(wclk, wrst, rptr, rptr_s);
 
 input logic wclk, wrst
 	input logic [ADDR_SIZE:0] rptr;
