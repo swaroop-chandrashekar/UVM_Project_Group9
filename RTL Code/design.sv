@@ -26,33 +26,31 @@ endmodule
 //////////********* FIFO Memory Buffer module*********////////////
 
 module fifomem #(parameter DATASIZE = 12, parameter ADDRSIZE = 12) // Number of data word width and mem address bits
-	(output logic [DATASIZE-1:0] rData,
-	 input logic [DATASIZE-1:0] wData,
+ (output logic [DATASIZE-1:0] rdata,
+ input logic [DATASIZE-1:0] wdata,
  input logic [ADDRSIZE-1:0] waddr, raddr,
  input logic rinc, winc, wclk, wrst, wFull, rEmpty, rclk);
 
  // memory model
- localparam DEPTH = 1<<ADDRSIZE-1;
+ localparam DEPTH = 1<<ADDRSIZE;
  logic [DATASIZE-1:0] mem [0:DEPTH-1];
 
 	always@(posedge rclk or negedge wrst)
 	 begin
 	      if(rinc && !rEmpty) 
-		 rData = mem[raddr];
+		 rdata = mem[raddr];
          end
 
 	always @(posedge wclk or negedge wrst)
 	begin
  	     if (winc && !wFull) 
-		 mem[waddr] <= wData;
+	        mem[waddr] <= wdata;
 	end
 endmodule
 //////////********* Synchronizer read to write module*********////////////
-
-
 module synchronizer_r2w #(parameter ADDR_SIZE = 12)(wclk, wrst, rptr, rptr_s);
 
-input logic wclk, wrst
+	input logic wclk, wrst;
 	input logic [ADDR_SIZE:0] rptr;
 	output logic [ADDR_SIZE:0] rptr_s;
      
@@ -64,7 +62,7 @@ input logic wclk, wrst
 		    {rptr_s, wq1_rptr} <= 0;
     		else 
 	    	    {rptr_s, wq1_rptr} <= {wq1_rptr, rptr};
-	end
+		end
 endmodule
 
 //////////********* Synchronizer write to read module*********////////////
@@ -72,8 +70,8 @@ endmodule
 
 module synchronizer_w2r #(parameter ADDR_SIZE = 12)(rclk, rrst, wptr, wptr_s);
 
-input rclk, rrst
-input [ADDR_SIZE:0] wptr;
+input logic rclk, rrst;
+input logic [ADDR_SIZE:0] wptr;
 output logic [ADDR_SIZE:0] wptr_s;
      
 logic [ADDR_SIZE:0] r1_wptr;
@@ -104,6 +102,7 @@ output logic [ADDR_SIZE :0] rptr;
 
 logic [ADDR_SIZE:0] rbin;                                                 //register for read pointer in binary
 logic rEmpty_reg;                                                         //register whether fifo empty or not
+logic rHalf_empty;														  //register to check the half empty conditions
 logic [ADDR_SIZE:0] rgraynext;                                            //next read pointer in gray code
 logic [ADDR_SIZE:0] rbinnext;                                             //next read pointer in binary form
 
@@ -115,7 +114,7 @@ begin
         end
        	else 
 	begin
-            	{rbin, rptr} <= {rbinnext, rgraynext};             //when reset is low it will set to 0 otherwise point to next location
+            	{rbin, rptr} <= {rbinnext, rgraynext};             		  //when reset is low it will set to 0 otherwise point to next location
         end
 end
 
@@ -123,11 +122,12 @@ assign raddr = rbin[ADDR_SIZE-1:0];                                       //read
 
 always_comb 
 begin                                                                     //read pointer logic
-	rbinnext = rbin + (rinc & ~rEmpty);                               //updated when rinc is high and fifo is not empty
-  rgraynext = (rbinnext>>1) ^ rbinnext;                             //binary to gray code conversion 
+	rbinnext = rbin + (rinc & ~rEmpty);                               	  //updated when rinc is high and fifo is not empty
+  	rgraynext = (rbinnext>>1) ^ rbinnext;                                 //binary to gray code conversion 
 end 
 
 assign rEmpty_reg = (rgraynext == wptr_s);                                //empty generation logic
+assign rHalf_empty = (rptr >= (1 << (ADDR_SIZE -1)));					  //comparing the rptr with the fifo to check for half empty
 
 always_ff @(posedge rclk or negedge rrst)                      
 begin
@@ -151,6 +151,7 @@ output logic [ADDR_SIZE-1:0] waddr;
 output logic [ADDR_SIZE :0] wptr;
 
 logic wFull_reg;                                                                    		     //register whether fifo full or not
+logic wHalf_full;																				 //checking half full condition 
 logic [ADDR_SIZE:0] wbin;                                                           		     //register for write pointer in binary
 logic [ADDR_SIZE:0] wgraynext;                                                      		     //next write pointer in gray code
 logic [ADDR_SIZE:0] wbinnext;                                                       		     //next write pointer in binary
@@ -158,24 +159,25 @@ logic [ADDR_SIZE:0] wbinnext;                                                   
 always_ff @(posedge wclk or negedge wrst)
 begin
 	if (!wrst) 
-	begin
+		begin
         	{wbin, wptr} <= 0;
     	end
     	else 
-	begin                                                                     	 	     //when reset is low it will set to 0 otherwise point to next write location
+		begin                                                                     	 	     	//when reset is low it will set to 0 otherwise point to next write location
         	{wbin, wptr} <= {wbinnext, wgraynext};
     	end
 end
 
-assign waddr = wbin[ADDR_SIZE-1:0];                                                 	             //write address is assigned the address bits from wbin - binary
+assign waddr = wbin[ADDR_SIZE-1:0];                                                 	        //write address is assigned the address bits from wbin - binary
 
 always_comb 
-begin                                                                   		             //write pointer logic
-	wbinnext = wbin + (winc & ~wFull);                                                           //updated when write increment is high and fifo is not full
-    	wgraynext = (wbinnext>>1) ^ wbinnext;                                                        //calculated by converting binary to gray code
+begin                                                                   		             	//write pointer logic
+	wbinnext = wbin + (winc & ~wFull);                                                          //updated when write increment is high and fifo is not full
+    wgraynext = (wbinnext>>1) ^ wbinnext;                                                       //calculated by converting binary to gray code
 end
 
 assign wFull_reg = (wgraynext=={~rptr_s[ADDR_SIZE : ADDR_SIZE-1], rptr_s[ADDR_SIZE-2:0]});           //it is set to 1 if next write pointer matches rptr_s indicating fifo is full
+assign wHalf_full = (wptr >= (1 << (ADDR_SIZE-1)));							//left shifting 1 by the ADDR_SIZE  and comparing with wptr if greater than then will be 1 
 
 always_ff @(posedge wclk or negedge wrst)
 begin
