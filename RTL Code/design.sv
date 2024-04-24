@@ -47,6 +47,25 @@ module fifomem #(parameter DATASIZE = 12, parameter ADDRSIZE = 12) // Number of 
 	        mem[waddr] <= wdata;
 	end
 endmodule
+//////////********* Synchronizer read to write module*********////////////
+
+
+module synchronizer_r2w #(parameter ADDR_SIZE = 12)(wclk, rrst, rptr, rptr_s);
+
+input logic wclk, wrst
+	input logic [ADDR_SIZE:0] rptr;
+	output logic [ADDR_SIZE:0] rptr_s;
+     
+	logic [ADDR_SIZE:0] wq1_rptr;
+
+	always_ff @(posedge wclk or negedge wrst) 
+        begin
+		if (!wrst) 
+		    {rptr_s, wq1_rptr} <= 0;
+    		else 
+	    	    {rptr_s, wq1_rptr} <= {wq1_rptr, rptr};
+endmodule
+
 //////////********* Synchronizer write to read module*********////////////
 
 
