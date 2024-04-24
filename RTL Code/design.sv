@@ -77,7 +77,7 @@ always_ff @(posedge rclk or negedge rrst)
 endmodule
 
 
-//////*****wptr module *********////
+//////*********wptr handler module*************///////
 module wptr_handler #(parameter ADDR_SIZE = 12)
        (wFull,
         waddr,
