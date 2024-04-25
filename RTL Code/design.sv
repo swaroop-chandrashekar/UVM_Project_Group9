@@ -35,11 +35,11 @@ module fifomem #(parameter DATASIZE = 12, parameter ADDRSIZE = 12) // Number of 
  localparam DEPTH = 1<<ADDRSIZE;
  logic [DATASIZE-1:0] mem [0:DEPTH-1];
 
-	always@(posedge rclk or negedge wrst)
-	 begin
-	      if(rinc && !rEmpty) 
-		 rdata = mem[raddr];
-         end
+	//always@(posedge rclk or negedge wrst)
+	// begin
+	   //   if(rinc && !rEmpty) 
+	assign 	 rdata = mem[raddr];
+        // end
 
 	always @(posedge wclk or negedge wrst)
 	begin
