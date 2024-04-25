@@ -17,7 +17,7 @@ logic [ADDR_SIZE:0] wptr, rptr, rptr_s, wptr_s;
 synchronizer_w2r                 	synchronizer_w2r_inst (.*); // write pointer to read clock domain
 synchronizer_r2w                 	synchronizer_r2w_inst (.*); // Read pointer to write clock domain
 
-fifo_mem #(DATA_SIZE, ADDR_SIZE, DEPTH) fifo_mem_inst         (.*);
+fifo_mem #(DATA_SIZE, ADDR_SIZE) fifo_mem_inst         (.*);
 rptr_handler #(ADDR_SIZE)       	rptr_handler_inst     (.*);
 wptr_handler #(ADDR_SIZE)       	wptr_handler_inst     (.*);
 
@@ -25,28 +25,33 @@ endmodule
 
 //////////********* FIFO Memory Buffer module*********////////////
 
-module fifomem #(parameter DATASIZE = 12, parameter ADDRSIZE = 12) // Number of data word width and mem address bits
- (output logic [DATASIZE-1:0] rdata,
- input logic [DATASIZE-1:0] wdata,
- input logic [ADDRSIZE-1:0] waddr, raddr,
- input logic rinc, winc, wclk, wrst, wFull, rEmpty, rclk);
+module fifo_mem #(parameter DATA_SIZE = 12, ADDR_SIZE = 12) (  rinc, winc, wclk, wrst, wFull, rEmpty, rclk, waddr, raddr, wData, rData);
 
+input logic rinc, winc, wclk, wrst, wFull, rEmpty, rclk;
+input logic [ADDR_SIZE-1:0] waddr, raddr;
+input logic [DATA_SIZE-1:0] wData;
+output logic [DATA_SIZE-1:0] rData;
+   
  // memory model
- localparam DEPTH = 1<<ADDRSIZE;
- logic [DATASIZE-1:0] mem [0:DEPTH-1];
+localparam DEPTH = 1<<ADDR_SIZE-1;
+logic [DATA_SIZE-1:0] mem [0:DEPTH-1];
 
-	//always@(posedge rclk or negedge wrst)
-	// begin
-	   //   if(rinc && !rEmpty) 
-	assign 	 rdata = mem[raddr];
-        // end
+always @(posedge wclk or negedge wrst)
+begin
+	if (winc && !wFull) 
+		mem[waddr] <= wData;
+end
 
-	always @(posedge wclk or negedge wrst)
-	begin
- 	     if (winc && !wFull) 
-	        mem[waddr] <= wdata;
-	end
+always@(posedge rclk or negedge wrst)
+begin
+	if(rinc && !rEmpty) 
+		rData = mem[raddr];
+end
+
+
 endmodule
+
+
 //////////********* Synchronizer read to write module*********////////////
 module synchronizer_r2w #(parameter ADDR_SIZE = 12)(wclk, wrst, rptr, rptr_s);
 
