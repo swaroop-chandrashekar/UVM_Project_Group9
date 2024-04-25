@@ -1,77 +1,85 @@
+
 module async_fifo_TB;
 
 parameter DATA_SIZE = 12;
 parameter NUM_OF_ITERATIONS = 10;
+parameter ADDR_SIZE = 12;
 
 logic  [DATA_SIZE-1:0] rData;
 logic wFull;
 logic rEmpty;
+logic rHalf_empty;
+logic wHalf_full;
 logic [DATA_SIZE-1:0] wData;
 logic winc, wclk, wrst;
 logic rinc, rclk, rrst;
 
 
-// Queue to push wData
-logic [DATA_SIZE-1:0] wdata_q[$], wdata;
+// Model a queue for checking data
+  logic [DATA_SIZE-1:0] verif_data_q[$];
+  logic[DATA_SIZE-1:0] verif_wdata;
 
-ASYNC_FIFO DUT (.*);
+ASYNC_FIFO  #(DATA_SIZE, ADDR_SIZE) DUT (.*);
 
-always #10ns wclk = ~wclk;
-always #35ns rclk = ~rclk;
+initial 
+begin
+	wclk = 1'b0;
+    rclk = 1'b0;
+	repeat(50000)begin
+		#10ns wclk = ~wclk;
+      	#35ns rclk = ~rclk;
+	end
+end
   
 initial 
 begin
-	wclk = 1'b0; wrst = 1'b0;
-    	winc = 1'b0;
-    	wData = 0;
-    
-	repeat(10) @(posedge wclk);
-    	wrst = 1'b1;
-
-    	repeat(2) 
-	begin
-      		for (int i=0; i<NUM_OF_ITERATIONS; i++) 
+    winc = 1'b0;
+    wData = '0;
+    wrst = 1'b0;
+    repeat(5) @(posedge wclk);
+    wrst = 1'b1;
+    	for (int i=0; i<4100; i++) 
+      	begin
+        	@(posedge wclk iff !wFull);
+        	winc = (i%2 == 0)? 1'b1 : 1'b0;
+			$display("%d",i);
+        	if (winc) 
 		begin
-        		@(posedge wclk iff !wFull);
-        		winc = (i%2 == 0)? 1'b1 : 1'b0;
-        		if (winc) 
-			begin
-          			wData = $urandom;
-          			wdata_q.push_back(wData);
-        		end
-      		end
-      		#50;
-    	end
+          		wData = $urandom;
+          		verif_data_q.push_front(wData);
+        	end
+        end
+
 end
+
 
 initial 
 begin
-	rclk = 1'b0; rrst = 1'b0;
-    	rinc = 1'b0;
+	$monitor(" \n\n Time =%t, wrst = %b, rrst = %b, winc = %d, rinc = %d, wData = %h, rData= %h,  wFull = %d, rEmpty = %d, rHalf_empty = %d, wHalf_full = %d ", $time, wrst , rrst, winc, rinc, wData, rData,  wFull, rEmpty, rHalf_empty, wHalf_full);	
+end
 
-    	repeat(20) @(posedge rclk);
+initial begin
+	rinc = 1'b0;
+    	rrst = 1'b0;
+    	repeat(8) @(posedge rclk);
     	rrst = 1'b1;
-
-    	repeat(2) 
-	begin
-      		for (int i=0; i<NUM_OF_ITERATIONS; i++) 
-		begin
-        		@(posedge rclk iff !rEmpty);
+      		for (int i=0; i<2050; i++) 
+			begin
+        		@(posedge rclk iff !rEmpty)
         		rinc = (i%2 == 0)? 1'b1 : 1'b0;
         		if (rinc) 
-			begin
-          			wdata = wdata_q.pop_front();
-          			if(rData !== wdata) 
-					$error("Time = %0t: Comparison Failed: expected wr_data = %h, rd_data = %h", $time, wdata, rData);
-          			else 
-					$display("Time = %0t: Comparison Passed: wr_data = %h and rd_data = %h",$time, wdata, rData);
-        		end
-     		 end
-      		#50;
-    	end
-
-    	$finish;
+					begin
+          				verif_wdata = verif_data_q.pop_back();
+          			// Check the rdata against modeled wdata
+	  					wait(rData)
+	  					assert(rData === verif_wdata) 
+	  	 				$display(" \n\n Checking PASSED: expected wdata = %h, rdata = %h", verif_wdata, rData);
+	  				else 
+		  			$error(" \n\n Checking failed: expected wdata = %h, rdata = %h", verif_wdata, rData);
+	  			$display("---------------------------------------------------------------------------------------------------------------------");
+       			 end
+      		end
+      $finish();
 end
-  
 endmodule
   
